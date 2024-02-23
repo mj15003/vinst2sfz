@@ -2,13 +2,14 @@
 Record MIDI instrument and produce SFZ mapping and WAV samples
 -----------------------------------
 # Description
-Record audio samples from virtual instrument (software or hardware) and generate SFZ mapping for them
-		-> PCM audio data are taken from specified JACK output
-		-> the instrument is triggered through ALSA MIDI sequencer
-		-> it is intended primary for drum samples
+Record audio samples from virtual instrument (software or hardware) and generate SFZ mapping for them  
+		-> PCM audio data are taken from specified JACK output  
+		-> the instrument is triggered through ALSA MIDI sequencer  
+		-> it is intended primary for drum samples    
+                -> Linux only  
 
-  # Usage
-  vinst2sfz -m file-name-base -n notenumber -p jack-port-string [options]  
+# Usage
+vinst2sfz -m file-name-base -n notenumber -p jack-port-string [options]  
 
    -a target ALSA MIDI port (Midi-Through 14:0)  
    -c target ALSA MIDI channel (10=Drums)  
