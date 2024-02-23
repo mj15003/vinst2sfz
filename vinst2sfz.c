@@ -1,11 +1,3 @@
-/********************************************************************************************************
-	Record audio samples from virtual instrument (software or hardware) and generate SFZ mapping for them
-		-> PCM audio data are taken from specified JACK output
-		-> the instrument is triggered through ALSA MIDI sequencer
-		-> it is intended primary for drum samples
-
-		Author : Miroslav Kovac (mixxoo@gmail.com)
-*********************************************************************************************************/
 #include <signal.h>
 #include <pthread.h>
 #include <math.h>
@@ -16,15 +8,15 @@
 static snd_seq_t *seq;
 
 static snd_seq_event_t ev;
-static char *dname;			/* file name base for naming WAVs and SFZ file*/
-static char *jports;			/* JACK output port string to connect to */
-static char *addr_s;			/* ALSA SEQ address string to connect to */
-static uint8_t note = 36;	/* MIDI note number */
-static uint8_t vel = 5;		/* number of velocity layers */
-static uint8_t rrob = 1;	/* number of round-robins*/
-static uint8_t midich = 9; //MIDI channel zero based -> ch 10=Drums
-static uint8_t dur = 10;	//seconds -> sets how much memory we need to allocate
-static float target_d_range = 20.0f; /* target dynamic range in dB */
+static char *dname;                 /* file name base for naming WAVs and SFZ file*/
+static char *jports;                /* JACK output port string to connect to */
+static char *addr_s;                /* ALSA SEQ address string to connect to */
+static uint8_t note = 36;	    /* MIDI note number */
+static uint8_t vel = 5;	            /* number of velocity layers */
+static uint8_t rrob = 1;            /* number of round-robins*/
+static uint8_t midich = 9;          //MIDI channel zero based -> ch 10=Drums
+static uint8_t dur = 10;            //seconds -> sets how much memory we need to allocate
+static float target_d_range = 20.0f;/* target dynamic range in dB */
 
 /* Amplitude correction type :
    ----> 0=no correction : SFZ should reproduce the original velocity->amplitude mapping
@@ -37,24 +29,24 @@ static char ampl_correction = 0;
 static const size_t sample_size = sizeof(jack_default_audio_sample_t);
 static jack_client_t *client;
 static jack_port_t *inp1,*inp2;
-static jack_default_audio_sample_t *ins1,*ins2;		/* JACK input buffers */
-static jack_default_audio_sample_t *smpl1,*smpl2;	/* sample memory pointers */
-static jack_default_audio_sample_t *samples;			/* current sample memory pointer */
+static jack_default_audio_sample_t *ins1,*ins2;	    /* JACK input buffers */
+static jack_default_audio_sample_t *smpl1,*smpl2;   /* sample memory pointers */
+static jack_default_audio_sample_t *samples;        /* current sample memory pointer */
 
-static double inthr = 0.003162277660168;				/* -50 dB */
-static double outthr = 0.000316227766016;				/* -70 dB */
-static jack_nframes_t fsize, wrt;						/* number of allocated and written samples */
-static jack_nframes_t rsmpln;								/* number of read samples */
-static jack_nframes_t srate;								/* JACK server sample rate */
-static jack_nframes_t bufsize;							/* JACK buffer size */
+static double inthr = 0.003162277660168;    /* -50 dB */
+static double outthr = 0.000316227766016;   /* -70 dB */
+static jack_nframes_t fsize, wrt;           /* number of allocated and written samples */
+static jack_nframes_t rsmpln;               /* number of read samples */
+static jack_nframes_t srate;                /* JACK server sample rate */
+static jack_nframes_t bufsize;              /* JACK buffer size */
 
-static float *s_max_vals;									/* max values of recorded samples */
+static float *s_max_vals;                   /* max values of recorded samples */
 
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t data_ready = PTHREAD_COND_INITIALIZER;
 
-static char wavname[256];				/* output WAV file name */
-static char sfzname[256];				/* output SFZ file name */
+static char wavname[256];         /* output WAV file name */
+static char sfzname[256];         /* output SFZ file name */
 
 /**
  * The process callback for this JACK application is called in a
@@ -63,12 +55,12 @@ static char sfzname[256];				/* output SFZ file name */
  */
 int process (jack_nframes_t nframes, void *arg)
 {
-	static char ready = 1;				/* indicates whether the process thread is ready */
-	static double rms_sum1 = 0.0;		/* moving RMS value channel 1*/
-	static double rms_sum2 = 0.0;		/* moving RMS value channel 2*/
-	static jack_nframes_t rms_size;	/* window size for moving RMS */
-	static jack_nframes_t rms_start;	/* start of the window for moving RMS */
-	static jack_nframes_t rstart;		/* whether recording has started */
+	static char ready = 1;            /* indicates whether the process thread is ready */
+	static double rms_sum1 = 0.0;     /* moving RMS value channel 1*/
+	static double rms_sum2 = 0.0;     /* moving RMS value channel 2*/
+	static jack_nframes_t rms_size;   /* window size for moving RMS */
+	static jack_nframes_t rms_start;  /* start of the window for moving RMS */
+	static jack_nframes_t rstart;     /* whether recording has started */
 
 	if (ready) {
 		if (pthread_mutex_trylock(&lock) == 0) {
@@ -493,15 +485,15 @@ void record_and_gensfz()
 	sf_info.format = SF_FORMAT_WAV|SF_FORMAT_PCM_24;
 	/************************************************************************/
 
-	FILE *sfzfile;	/* Pointer to SFZ text file */
+	FILE *sfzfile;	                /* Pointer to SFZ text file */
 
-	uint8_t vels = 127/vel;		/* velocity step */
-	uint8_t hivel = 0;			/* actual MIDI velocity */
-	uint8_t r;						/* Round robin counter */
-	float sv_min = 1.0f;			/* minimal maximum of all recording */
-	float sv_max = 0.0f;			/* maximum amplitude of all recording */
-	float sv_d_range;				/* dynamic range of all recording in dB */
-	uint16_t scounter = vel*rrob;	/* sample counter */
+	uint8_t vels = 127/vel;	        /* velocity step */
+	uint8_t hivel = 0;	        /* actual MIDI velocity */
+	uint8_t r;		        /* Round robin counter */
+	float sv_min = 1.0f;	        /* minimal maximum of all recording */
+	float sv_max = 0.0f;	        /* maximum amplitude of all recording */
+	float sv_d_range;	        /* dynamic range of all recording in dB */
+	uint16_t scounter = vel*rrob;   /* sample counter */
 
 	/* Allocate memory for sample maximal values */
 	s_max_vals = calloc(scounter, sizeof(float));
@@ -594,9 +586,9 @@ void record_and_gensfz()
 
 	/* Reloop the cycle one more and fill the content of SFZ */
 	uint8_t lovel = 1;
-	float d_range_step;		//dynamic range step
-	float d_range_target;	//dynamic range target
-	float pd_range_target;	//previous dynamic range target
+	float d_range_step;     //dynamic range step
+	float d_range_target;   //dynamic range target
+	float pd_range_target;  //previous dynamic range target
 
 	if (ampl_correction == 2) {
 
@@ -796,8 +788,8 @@ int main (int argc, char *argv[])
 	err = atexit(cleanup);
 	if (err != 0)
 	{
-		fprintf(stderr, "cannot set exit function\n");
-        exit(EXIT_FAILURE);
+	        fprintf(stderr, "cannot set exit function\n");
+                exit(EXIT_FAILURE);
 	}
 
 	/************************************************************************/
