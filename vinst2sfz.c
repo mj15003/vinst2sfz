@@ -703,7 +703,7 @@ void record_and_gensfz()
 
 void show_usage()
 {
-   puts("\nvinst2sfz -m file-name-base -n notenumber -p jack-port-string [options]\n");
+   puts("\nvinst2sfz -m file-name-base -n note-number -p jack-port-string [options]\n");
    puts("   -a target ALSA MIDI port (Midi-Through 14:0)");
    puts("   -c target ALSA MIDI channel (10=Drums)");
    puts("   -d maximal duration in seconds (10 s)");
@@ -742,7 +742,7 @@ int main (int argc, char *argv[])
    opterr = 0;
    int opt,err;
    char optok = 0;
-   while ((opt = getopt(argc, argv, "a:d:hi:lm:n:o:p:r:t:v:xy:")) != -1) {
+   while ((opt = getopt(argc, argv, "a:c:d:hi:lm:n:o:p:r:t:v:xy:")) != -1) {
       switch (opt) {
          case 'a':
             addr_s = optarg;
